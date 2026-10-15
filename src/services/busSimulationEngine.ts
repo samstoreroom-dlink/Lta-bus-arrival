@@ -64,6 +64,44 @@ class BusSimulationEngine {
     }
   }
 
+  /**
+   * Queries the serverless /api/busarrival proxy
+   */
+  public async fetchLiveLtaArrivals(busStopCode: string): Promise<any | null> {
+    try {
+      const headers: Record<string, string> = {
+        accept: 'application/json'
+      };
+      if (this.ltaApiKey) {
+        headers['accountkey'] = this.ltaApiKey;
+      }
+      const res = await fetch(`/api/busarrival?BusStopCode=${encodeURIComponent(busStopCode)}`, {
+        headers
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Checks the serverless /api/health status
+   */
+  public async checkApiHealth(): Promise<{ status: string; ltaKeyConfigured: boolean } | null> {
+    try {
+      const res = await fetch('/api/health');
+      if (res.ok) {
+        return await res.json();
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   public getTrafficCondition(): TrafficCondition {
     return this.currentTraffic;
   }

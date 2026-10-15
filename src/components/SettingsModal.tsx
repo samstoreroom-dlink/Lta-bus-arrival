@@ -16,6 +16,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [apiKey, setApiKey] = useState(busEngine.getApiKey());
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [testOutput, setTestOutput] = useState<string | null>(null);
 
   const handleSaveApiKey = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +122,70 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               )}
             </form>
+          </div>
+
+          {/* Serverless Connection Status & Live Test */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-200 uppercase tracking-wider block">
+                Serverless API Endpoints (/api)
+              </span>
+              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">
+                Active
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Live serverless proxy endpoints installed in <code className="text-emerald-400 font-mono">/api/health.ts</code> and <code className="text-emerald-400 font-mono">/api/busarrival.ts</code>.
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/health');
+                    const json = await res.json();
+                    setTestOutput(`GET /api/health (Status ${res.status}):\n` + JSON.stringify(json, null, 2));
+                  } catch (err) {
+                    setTestOutput(`Health check failed: ${err}`);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 hover:border-slate-600 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                Test GET /api/health
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const headers: Record<string, string> = { accept: 'application/json' };
+                    if (apiKey) headers['accountkey'] = apiKey;
+                    const res = await fetch('/api/busarrival?BusStopCode=83139', { headers });
+                    const json = await res.json();
+                    setTestOutput(`GET /api/busarrival?BusStopCode=83139 (Status ${res.status}):\n` + JSON.stringify(json, null, 2));
+                  } catch (err) {
+                    setTestOutput(`BusArrival test failed: ${err}`);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-700/80 hover:border-emerald-600 text-xs text-emerald-300 font-medium transition-colors cursor-pointer"
+              >
+                Test GET /api/busarrival?BusStopCode=83139
+              </button>
+            </div>
+
+            {testOutput && (
+              <div className="relative mt-2 p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-48 whitespace-pre">
+                <button
+                  type="button"
+                  onClick={() => setTestOutput(null)}
+                  className="absolute top-2 right-2 text-slate-500 hover:text-white text-xs px-1"
+                >
+                  ✕
+                </button>
+                {testOutput}
+              </div>
+            )}
           </div>
 
           {/* Prediction Model Specification */}
